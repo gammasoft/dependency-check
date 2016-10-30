@@ -120,7 +120,7 @@ function checkDependencies (owner, repo, callback) {
 app.post('/commit', function (req, res, next) {
   res.status(202).json({})
   const repository = req.body.repository
-  checkDependencies(repository.owner.login, repository.name)
+  checkDependencies(repository.owner.name, repository.name)
 })
 
 app.listen(process.env.PORT || 3000)
