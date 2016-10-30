@@ -4,8 +4,12 @@
   "description": "Service to check wether your package.json depencies are updated",
   "main": "index.js",
   "scripts": {
+    "start": "node index",
     "test": "exit 0",
-    "deploy": "git add . && git commit -m \"make it better\" && git push heroku master && heroku logs --tail"
+    "deploy": "git add . && git commit -m \"heroku deploy\" && git push heroku master && heroku logs --tail"
+  },
+  "engines": {
+    "node": "6.9.1"
   },
   "repository": {
     "type": "git",
