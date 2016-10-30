@@ -42,6 +42,7 @@ app.get('/:owner/:repo', function (req, res, next) {
       color: isOutdated ? 'red' : 'brightgreen'
     })
 
+    res.set('Cache-Control', 'no-cache')
     request(badgeUrl).pipe(res)
   })
 })
