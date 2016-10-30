@@ -44,6 +44,8 @@ app.get('/:owner/:repo', function (req, res, next) {
 })
 
 function checkDependencies (owner, repo, callback) {
+  console.log(owner, repo)
+
   function downloadPackage(callback) {
     const github = new Github()
 
