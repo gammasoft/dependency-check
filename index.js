@@ -50,7 +50,7 @@ app.get('/:owner/:repo', noCache, function (req, res, next) {
   })
 })
 
-app.get('/:owner/:repo/json', nocache, function (req, res, next) {
+app.get('/:owner/:repo/json', noCache, function (req, res, next) {
   const { owner, repo } = req.params
   const outdated = cache[req.path]
   let fn = noop(outdated)
