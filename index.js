@@ -38,7 +38,9 @@ app.get('/:owner/:repo', function (req, res, next) {
 
     res.set('Connection', 'close')
     res.set('Content-Type', 'image/svg+xml')
-    res.set('Cache-Control', 'no-cache')
+    res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    res.set('Expires', '-1')
+    res.set('Pragma', 'no-cache')
     fs.createReadStream(badgePath).pipe(res)
   })
 })
@@ -76,7 +78,7 @@ function checkDependencies (owner, repo, callback) {
     let dependencies = Object.assign({}, pkg.dependencies)
     dependencies = Object.assign(dependencies, pkg.devDependencies)
 
-    async.mapValuesSeries(dependencies, function (version, name, cb) {
+    async.mapValuesLimit(dependencies, 3, function (version, name, cb) {
       exec(`npm info ${name}@latest version`, function (err, latest) {
         if (err) {
           return cb(err)
