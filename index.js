@@ -55,6 +55,8 @@ app.get('/:owner/:repo/json', noCache, function (req, res, next) {
   const outdated = cache[req.path]
   let fn = noop(outdated)
 
+  console.log(outdated)
+
   if (typeof outdated === 'undefined') {
     fn = checkDependencies
   }
@@ -66,6 +68,10 @@ app.get('/:owner/:repo/json', noCache, function (req, res, next) {
 
     res.json(outdated)
   })
+})
+
+app.get('/cache', function (req, res, next) {
+  res.json(cache)
 })
 
 function checkDependencies (owner, repo, callback) {
