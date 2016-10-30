@@ -7,7 +7,7 @@ const app = express()
 app.use(bodyParser.json())
 
 // Setup github api client
-const github = new GitHubApi()
+const github = new Github()
 github.authenticate({
   type: "token",
   token: process.env.GH_TOKEN
