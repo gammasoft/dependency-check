@@ -1,0 +1,32 @@
+{
+  "name": "dependency-check",
+  "version": "1.0.0",
+  "description": "Service to check wether your package.json depencies are updated",
+  "main": "index.js",
+  "scripts": {
+    "test": "exit 0",
+    "deploy": "git add . && git commit -m \"make it better\" && git push heroku master && heroku logs --tail"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://renatoargh@github.com/gammasoft/dependency-check.git"
+  },
+  "keywords": [
+    "dependecy",
+    "check",
+    "package.json",
+    "update"
+  ],
+  "author": "Renato Gama <renato@gammasoft.com.br>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gammasoft/dependency-check/issues"
+  },
+  "homepage": "https://github.com/gammasoft/dependency-check#readme",
+  "dependencies": {
+    "async": "^2.1.2",
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "request": "^2.76.0"
+  }
+}
