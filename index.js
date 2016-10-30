@@ -117,8 +117,9 @@ function checkDependencies (owner, repo, callback) {
   }
 
   function filterOutdated (packages, callback) {
-    const outdated = Object.keys(packages).filter(function (pkg) {
-      pkg = packages[pkg]
+    const outdated = Object.keys(packages).map(function (pkg) {
+      return packages[pkg]
+    }).filter(function (pkg) {
       return !semver.satisfies(pkg.latest, pkg.current)
     })
 
