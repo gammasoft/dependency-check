@@ -76,13 +76,14 @@ function checkDependencies (owner, repo, callback) {
     let dependencies = Object.assign({}, pkg.dependencies)
     dependencies = Object.assign(dependencies, pkg.devDependencies)
 
-    async.mapValues(dependencies, function (version, name, cb) {
+    async.mapValuesSeries(dependencies, function (version, name, cb) {
       exec(`npm info ${name}@latest version`, function (err, latest) {
         if (err) {
           return cb(err)
         }
 
         cb(null, {
+          name,
           current: version,
           latest: latest.trim()
         })
