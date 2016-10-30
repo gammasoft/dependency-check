@@ -39,7 +39,7 @@ app.get('/:owner/:repo', function (req, res, next) {
     const badgeUrl = getBadgeUrl({
       subject: 'dependencies',
       status: isOutdated ? 'outdated' : 'uptodate',
-      color: isOutdated ? 'red' : 'green'
+      color: isOutdated ? 'red' : 'brightgreen'
     })
 
     request(badgeUrl).pipe(res)
