@@ -3,17 +3,13 @@ const Github = require('github')
 const express = require('express')
 const bodyParser = require('body-parser')
 const semver = require('semver')
-const request = require('request')
+const fs = require('fs')
+const path = require('path')
 const exec = require('child_process').exec
 
 const app = express()
 app.use(bodyParser.json())
-
-function getBadgeUrl ({subject, status, color }) {
-  return 'https://img.shields.io/badge/' + [
-    subject, status, color
-  ].join('-') + '.svg'
-}
+app.set('etag', false)
 
 function noop (returnValue) {
   return function (owner, repo, callback) {
@@ -36,14 +32,14 @@ app.get('/:owner/:repo', function (req, res, next) {
       return next(err)
     }
 
-    const badgeUrl = getBadgeUrl({
-      subject: 'dependencies',
-      status: isOutdated ? 'outdated' : 'uptodate',
-      color: isOutdated ? 'red' : 'brightgreen'
-    })
+    const badgeName = isOutdated ? 'outdated' : 'uptodate'
+    let badgePath = path.join(__dirname, './badges')
+    badgePath = path.join(badgePath, badgeName) + '.svg'
 
+    res.set('Connection', 'close')
+    res.set('Content-Type', 'image/svg+xml')
     res.set('Cache-Control', 'no-cache')
-    request(badgeUrl).pipe(res)
+    fs.createReadStream(badgePath).pipe(res)
   })
 })
 
@@ -75,7 +71,10 @@ function checkDependencies (owner, repo, callback) {
   }
 
   function getLatestVersions (pkg, callback) {
-    async.mapValues(pkg.dependencies, function (version, name, cb) {
+    let dependencies = Object.assign({}, pkg.dependencies)
+    dependencies = Object.assign(dependencies, pkg.devDependencies)
+
+    async.mapValues(dependencies, function (version, name, cb) {
       exec(`npm info ${name}@latest version`, function (err, latest) {
         if (err) {
           return cb(err)
