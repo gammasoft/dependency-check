@@ -17,31 +17,54 @@ function noop (returnValue) {
   }
 }
 
-const cache = {}
-app.get('/:owner/:repo', function (req, res, next) {
-  const { owner, repo } = req.params
-  const isOutdated = cache[req.path]
-  let fn = noop(isOutdated)
+function noCache (req, res, next) {
+  res.set('Connection', 'close')
+  res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+  res.set('Expires', '-1')
+  res.set('Pragma', 'no-cache')
+  next()
+}
 
-  if (typeof isOutdated === 'undefined') {
+const cache = {}
+app.get('/:owner/:repo', noCache, function (req, res, next) {
+  const { owner, repo } = req.params
+  const outdated = cache[req.path]
+  let fn = noop(outdated)
+
+  if (typeof outdated === 'undefined') {
     fn = checkDependencies
   }
 
-  fn(owner, repo, function (err, isOutdated) {
+  fn(owner, repo, function (err, outdated) {
     if (err) {
       return next(err)
     }
 
+    const isOutdated = outdated.length
     const badgeName = isOutdated ? 'outdated' : 'uptodate'
     let badgePath = path.join(__dirname, './badges')
     badgePath = path.join(badgePath, badgeName) + '.svg'
 
-    res.set('Connection', 'close')
     res.set('Content-Type', 'image/svg+xml')
-    res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
-    res.set('Expires', '-1')
-    res.set('Pragma', 'no-cache')
     fs.createReadStream(badgePath).pipe(res)
+  })
+})
+
+app.get('/:owner/:repo/json', nocache, function (req, res, next) {
+  const { owner, repo } = req.params
+  const outdated = cache[req.path]
+  let fn = noop(outdated)
+
+  if (typeof outdated === 'undefined') {
+    fn = checkDependencies
+  }
+
+  fn(owner, repo, function (err, outdated) {
+    if (err) {
+      return next(err)
+    }
+
+    res.json(outdated)
   })
 })
 
@@ -99,12 +122,12 @@ function checkDependencies (owner, repo, callback) {
       return !semver.satisfies(pkg.latest, pkg.current)
     })
 
-    callback(null, !!outdated.length)
+    callback(null, outdated)
   }
 
-  function setCache (isOutdated, cb) {
-    cache[`/${owner}/${repo}`] = isOutdated
-    cb(null, isOutdated)
+  function setCache (outdated, cb) {
+    cache[`/${owner}/${repo}`] = outdated
+    cb(null, outdated)
   }
 
   async.waterfall([
