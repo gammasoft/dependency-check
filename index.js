@@ -9,13 +9,8 @@ const exec = require('child_process').exec
 
 const app = express()
 app.use(bodyParser.json())
+app.set('view engine', 'pug');
 app.set('etag', false)
-
-function noop (returnValue) {
-  return function (owner, repo, callback) {
-    callback(null, returnValue)
-  }
-}
 
 function noCache (req, res, next) {
   res.set('Connection', 'close')
@@ -29,48 +24,47 @@ const cache = {}
 app.get('/:owner/:repo', noCache, function (req, res, next) {
   const { owner, repo } = req.params
   const outdated = cache[req.path]
-  let fn = noop(outdated)
 
-  if (typeof outdated === 'undefined') {
-    fn = checkDependencies
+  if (!outdated) {
+    return next()
   }
 
-  fn(owner, repo, function (err, outdated) {
-    if (err) {
-      return next(err)
-    }
+  const isOutdated = outdated.length
+  const badgeName = isOutdated ? 'outdated' : 'uptodate'
+  let badgePath = path.join(__dirname, './badges')
+  badgePath = path.join(badgePath, badgeName) + '.svg'
 
-    const isOutdated = outdated.length
-    const badgeName = isOutdated ? 'outdated' : 'uptodate'
-    let badgePath = path.join(__dirname, './badges')
-    badgePath = path.join(badgePath, badgeName) + '.svg'
-
-    res.set('Content-Type', 'image/svg+xml')
-    fs.createReadStream(badgePath).pipe(res)
-  })
+  res.set('Content-Type', 'image/svg+xml')
+  fs.createReadStream(badgePath).pipe(res)
 })
 
 app.get('/:owner/:repo/json', noCache, function (req, res, next) {
   const { owner, repo } = req.params
   const outdated = cache[`/${owner}/${repo}`]
-  let fn = noop(outdated)
 
-  if (typeof outdated === 'undefined') {
-    fn = checkDependencies
+  if (!outdated) {
+    return next()
   }
 
-  fn(owner, repo, function (err, outdated) {
-    if (err) {
-      return next(err)
-    }
+  res.json(outdated)
+})
 
-    res.json(outdated)
+app.get('/:owner/:repo/html', noCache, function (req, res, next) {
+  const { owner, repo } = req.params
+  const outdated = cache[`/${owner}/${repo}`]
+
+  if (!outdated) {
+    return next()
+  }
+
+  res.render('report', {
+    owner,
+    repo,
+    outdated
   })
 })
 
 function checkDependencies (owner, repo, callback) {
-  console.log(owner, repo)
-
   function downloadPackage(callback) {
     const github = new Github()
 

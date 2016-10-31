@@ -1,0 +1,29 @@
+html
+  head
+    title: | Dependency Check
+    link(href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css", rel="stylesheet", integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u", crossorigin="anonymous")
+  body
+    .container
+      .row
+        .col-sm-offset-3.col-sm-6
+          h1: | Dependency Check
+          p.lead: | www.github.com/#{owner}/#{repo}
+
+          if !outdated.length
+            strong: | All dependencies updated!
+          else
+            table.table.table-condensed.table-striped.table-hover
+              thead
+                th: | Package
+                th: | Current
+                th: | Latest
+                th: | Downloads
+              tbody
+                each dep in outdated
+                  tr
+                    td
+                      a(href="http://www.npmjs.com/package/" + dep.name, target="_blank"): | #{dep.name}
+                    td: | #{dep.current}
+                    td: | #{dep.latest}
+                    td
+                      img(src="http://img.shields.io/npm/dm/" + dep.name + ".svg")
