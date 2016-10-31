@@ -10,7 +10,9 @@ html
           p.lead: | www.github.com/#{owner}/#{repo}
 
           if !outdated.length
-            strong: | All dependencies updated!
+            strong.text-success
+              | All dependencies updated!&nbsp;
+              i.glyphicon.glyphicon-ok
           else
             table.table.table-condensed.table-striped.table-hover
               thead
@@ -27,3 +29,6 @@ html
                     td: | #{dep.latest}
                     td
                       img(src="http://img.shields.io/npm/dm/" + dep.name + ".svg")
+
+          hr
+          p.small: | Gammasoft Desenvolvimento de Software

@@ -6,61 +6,63 @@ const semver = require('semver')
 const fs = require('fs')
 const path = require('path')
 const exec = require('child_process').exec
+const cache = {}
 
 const app = express()
 app.use(bodyParser.json())
 app.set('view engine', 'pug');
 app.set('etag', false)
 
-function noCache (req, res, next) {
+function renderData (req, res, next) {
+  const { owner, repo } = req.params
+  const outdated = cache[`/${owner}/${repo}`]
+
+  if (!outdated) {
+    return next()
+  }
+
   res.set('Connection', 'close')
   res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
   res.set('Expires', '-1')
   res.set('Pragma', 'no-cache')
-  next()
+
+  res.format({
+    'application/json': function () {
+      res.json(outdated)
+    },
+
+    'text/html': function () {
+      res.render('report', { owner, repo, outdated })
+    },
+
+    'image/svg+xml': function () {
+      const isOutdated = outdated.length
+      const badgeName = isOutdated ? 'outdated' : 'uptodate'
+      let badgePath = path.join(__dirname, './badges')
+      badgePath = path.join(badgePath, badgeName) + '.svg'
+
+      res.set('Content-Type', 'image/svg+xml')
+      fs.createReadStream(badgePath).pipe(res)
+    }
+  })
 }
 
-const cache = {}
-app.get('/:owner/:repo', noCache, function (req, res, next) {
-  const { owner, repo } = req.params
-  const outdated = cache[`/${owner}/${repo}`]
-
-  if (!outdated) {
-    return next()
-  }
-
-  const isOutdated = outdated.length
-  const badgeName = isOutdated ? 'outdated' : 'uptodate'
-  let badgePath = path.join(__dirname, './badges')
-  badgePath = path.join(badgePath, badgeName) + '.svg'
-
-  res.set('Content-Type', 'image/svg+xml')
-  fs.createReadStream(badgePath).pipe(res)
+app.get('/:owner/:repo/svg', function (req, res, next) {
+  req.headers.accept = 'image/svg+xml'
+  renderData(req, res, next)
 })
 
-app.get('/:owner/:repo/json', noCache, function (req, res, next) {
-  const { owner, repo } = req.params
-  const outdated = cache[`/${owner}/${repo}`]
-
-  if (!outdated) {
-    return next()
-  }
-
-  res.json(outdated)
+app.get('/:owner/:repo/html', function (req, res, next) {
+  req.headers.accept = 'text/html'
+  renderData(req, res, next)
 })
 
-app.get('/:owner/:repo/html', noCache, function (req, res, next) {
-  const { owner, repo } = req.params
-  const outdated = cache[`/${owner}/${repo}`]
-
-  if (!outdated) {
-    return next()
-  }
-
-  res.render('report', {
-    owner, repo, outdated
-  })
+app.get('/:owner/:repo/json', function (req, res, next) {
+  req.headers.accept = 'application/json'
+  renderData(req, res, next)
 })
+
+app.get('/:owner/:repo', renderData)
 
 function checkDependencies (owner, repo, callback) {
   function downloadPackage(callback) {
@@ -130,16 +132,17 @@ function checkDependencies (owner, repo, callback) {
     filterOutdated,
     setCache
   ], function (err) {
-    if (err) {
-      console.log(err)
-    }
+    err && console.log(err)
   })
 }
 
 app.post('/commit', function (req, res, next) {
   res.status(202).json({})
+
   const repository = req.body.repository
-  checkDependencies(repository.owner.name, repository.name)
+  const owner = repository.owner.name || repository.owner.login
+
+  checkDependencies(owner, repository.name)
 })
 
 app.listen(process.env.PORT)
