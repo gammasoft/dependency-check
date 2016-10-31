@@ -23,7 +23,7 @@ function noCache (req, res, next) {
 const cache = {}
 app.get('/:owner/:repo', noCache, function (req, res, next) {
   const { owner, repo } = req.params
-  const outdated = cache[req.path]
+  const outdated = cache[`/${owner}/${repo}`]
 
   if (!outdated) {
     return next()
@@ -58,9 +58,7 @@ app.get('/:owner/:repo/html', noCache, function (req, res, next) {
   }
 
   res.render('report', {
-    owner,
-    repo,
-    outdated
+    owner, repo, outdated
   })
 })
 
@@ -131,7 +129,7 @@ function checkDependencies (owner, repo, callback) {
     getLatestVersions,
     filterOutdated,
     setCache
-  ], callback || function (err) {
+  ], function (err) {
     if (err) {
       console.log(err)
     }
@@ -144,4 +142,4 @@ app.post('/commit', function (req, res, next) {
   checkDependencies(repository.owner.name, repository.name)
 })
 
-app.listen(process.env.PORT || 3000)
+app.listen(process.env.PORT)
